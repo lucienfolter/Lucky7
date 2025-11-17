@@ -1,11 +1,7 @@
-const express = require("express");
-const router = express.Router();
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
-
-// Register User
-router.post("/register", async (req, res) => {
+exports.register = async (req, res) => {
   try {
     const { fullName, email, phone, password, role } = req.body;
 
@@ -14,7 +10,7 @@ router.post("/register", async (req, res) => {
       email,
       phone,
       password,
-      role,  // <--- important
+      role,
     });
 
     const token = jwt.sign(
@@ -32,25 +28,24 @@ router.post("/register", async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-});
+};
 
-
-// Login User
-router.post("/login", async (req, res) => {
+exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email }).select("+password");
-    if (!user) return res.status(400).json({ success: false, message: "Invalid email or password" });
+    if (!user) return res.status(400).json({ message: "Invalid email or password" });
 
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) return res.status(400).json({ success: false, message: "Invalid email or password" });
+    if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-    // update last login
     user.lastLogin = new Date();
     await user.save();
 
@@ -61,8 +56,6 @@ router.post("/login", async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ message: error.message });
   }
-});
-
-module.exports = router;
+};
