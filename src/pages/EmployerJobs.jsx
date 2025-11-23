@@ -302,9 +302,10 @@ export default function EmployerJobs() {
                 }
                 className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl"
               >
-                🚀 Post Job
+                Post Job
               </button>
             </div>
+
           </div>
         </div>
       )}

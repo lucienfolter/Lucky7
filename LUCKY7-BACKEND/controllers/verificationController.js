@@ -1,5 +1,6 @@
 const User = require('../models/User');
-const cloudinary = require('../config/cloudinary');
+const fs = require('fs');
+const path = require('path');
 const { verifyFaceMatch } = require('../services/faceVerificationService');
 
 // @desc    Upload ID document
@@ -16,24 +17,34 @@ exports.uploadDocument = async (req, res) => {
       });
     }
 
-    const file = req.files.document;
+    // Support both multer (req.file) and express-fileupload (req.files.document)
+    let file = null;
+    let sourcePath = null;
+    let originalName = 'document.jpg';
+    if (req.file) {
+      file = req.file;
+      sourcePath = req.file.path;
+      originalName = req.file.originalname || req.file.filename;
+    } else if (req.files && req.files.document) {
+      file = req.files.document;
+      sourcePath = file.tempFilePath;
+      originalName = file.name || originalName;
+    }
 
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(file.tempFilePath, {
-      folder: 'dailywage/verification/documents',
-      resource_type: 'image',
-      transformation: [
-        { width: 1000, height: 1000, crop: 'limit' },
-        { quality: 'auto' }
-      ]
-    });
+    // Save locally in uploads/verification/documents
+    const destDir = path.join(__dirname, '..', 'uploads', 'verification', 'documents');
+    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+    const filename = Date.now() + '_' + originalName.replace(/\s+/g, '_');
+    const destPath = path.join(destDir, filename);
+    // move/copy file to uploads directory
+    fs.renameSync(sourcePath, destPath);
 
     // Update user verification
     const user = await User.findById(req.user.id);
     user.verification.documentType = documentType;
     user.verification.documentImage = {
-      url: result.secure_url,
-      publicId: result.public_id
+      url: `/uploads/verification/documents/${filename}`,
+      publicId: null
     };
     user.verification.status = 'pending';
     await user.save();
@@ -42,8 +53,8 @@ exports.uploadDocument = async (req, res) => {
       success: true,
       message: 'Document uploaded successfully',
       data: {
-        url: result.secure_url,
-        publicId: result.public_id
+        url: `/uploads/verification/documents/${filename}`,
+        publicId: null
       }
     });
   } catch (error) {
@@ -68,23 +79,32 @@ exports.uploadSelfie = async (req, res) => {
       });
     }
 
-    const file = req.files.selfie;
+    // Support both multer (req.file) and express-fileupload (req.files.selfie)
+    let selfieFile = null;
+    let selfieSource = null;
+    let selfieOriginal = 'selfie.jpg';
+    if (req.file) {
+      selfieFile = req.file;
+      selfieSource = req.file.path;
+      selfieOriginal = req.file.originalname || req.file.filename;
+    } else if (req.files && req.files.selfie) {
+      selfieFile = req.files.selfie;
+      selfieSource = selfieFile.tempFilePath;
+      selfieOriginal = selfieFile.name || selfieOriginal;
+    }
 
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(file.tempFilePath, {
-      folder: 'dailywage/verification/selfies',
-      resource_type: 'image',
-      transformation: [
-        { width: 800, height: 800, crop: 'fill', gravity: 'face' },
-        { quality: 'auto' }
-      ]
-    });
+    // Save locally in uploads/verification/selfies
+    const destDir = path.join(__dirname, '..', 'uploads', 'verification', 'selfies');
+    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+    const filename = Date.now() + '_' + selfieOriginal.replace(/\s+/g, '_');
+    const destPath = path.join(destDir, filename);
+    fs.renameSync(selfieSource, destPath);
 
     // Update user verification
     const user = await User.findById(req.user.id);
     user.verification.selfieImage = {
-      url: result.secure_url,
-      publicId: result.public_id
+      url: `/uploads/verification/selfies/${filename}`,
+      publicId: null
     };
     await user.save();
 
