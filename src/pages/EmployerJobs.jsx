@@ -1,44 +1,90 @@
-import { useState } from "react";
-import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import SidebarEmployer from "../Components/SidebarEmployer";
 import ImageUploader from "../Components/ImageUploader";
+import { postJob, getEmployerJobs } from "../services/jobService";
+import { useAuth } from "../context/AuthContext";
 
 export default function EmployerJobs() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+
   const [showPostJobModal, setShowPostJobModal] = useState(false);
   const [jobImage, setJobImage] = useState(null);
+  const [employerJobs, setEmployerJobs] = useState([]);
+
   const [jobData, setJobData] = useState({
-    title: '',
-    category: '',
-    description: '',
-    rate: '',
-    duration: '',
-    location: '',
-    date: '',
-    urgent: false
+    title: "",
+    category: "",
+    description: "",
+    rate: "",
+    duration: "",
+    location: "",
+    date: "",
+    urgent: false,
   });
 
+  // Image upload handler
   const handleImageUpload = (file, preview) => {
     setJobImage({ file, preview });
   };
 
-  const handlePostJob = () => {
-    console.log('Job Data:', jobData);
-    console.log('Job Image:', jobImage);
-    alert('Job posted successfully!');
-    setShowPostJobModal(false);
-    // Reset form
-    setJobData({
-      title: '',
-      category: '',
-      description: '',
-      rate: '',
-      duration: '',
-      location: '',
-      date: '',
-      urgent: false
-    });
-    setJobImage(null);
+  // 🔥 Fetch employer's jobs
+  const loadEmployerJobs = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await getEmployerJobs(user._id, token);
+      setEmployerJobs(res.data.jobs || []);
+    } catch (error) {
+      console.error("Failed to load employer jobs:", error);
+    }
+  };
+
+  // Fetch jobs when user loads
+  useEffect(() => {
+    if (user?._id) {
+      loadEmployerJobs();
+    }
+  }, [user]);
+
+  // POST JOB
+  const handlePostJob = async () => {
+    try {
+      const formData = new FormData();
+
+      Object.keys(jobData).forEach((key) => {
+        formData.append(key, jobData[key]);
+      });
+
+      if (jobImage?.file) {
+        formData.append("image", jobImage.file);
+      }
+
+      const token = localStorage.getItem("token");
+      await postJob(formData, token);
+
+      alert("✅ Job posted successfully!");
+
+      // ⭐ refresh job list instantly
+      await loadEmployerJobs();
+
+      // reset
+      setShowPostJobModal(false);
+      setJobData({
+        title: "",
+        category: "",
+        description: "",
+        rate: "",
+        duration: "",
+        location: "",
+        date: "",
+        urgent: false,
+      });
+      setJobImage(null);
+    } catch (error) {
+      console.error("Job post error:", error);
+      alert("❌ Failed to post job.");
+    }
   };
 
   return (
@@ -46,35 +92,52 @@ export default function EmployerJobs() {
       <SidebarEmployer />
 
       <main className="flex-1 p-10">
+        {/* HEADER */}
         <div className="flex justify-between items-center mb-8">
           <header className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            {t('jobs.title')}
+            {t("jobs.title")}
           </header>
+
           <button
             onClick={() => setShowPostJobModal(true)}
-            className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all font-semibold flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            {t('jobs.postNewJob')}
+            ➕ {t("jobs.postNewJob")}
           </button>
         </div>
 
+        {/* JOB LIST */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-blue-200">
-          <div className="text-center py-12">
-            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-12 h-12 text-blue-600">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
+          <h2 className="text-2xl font-bold mb-6">Manage Jobs</h2>
+
+          {employerJobs.length === 0 ? (
+            <div className="text-center py-12">
+              <h3 className="text-xl font-bold text-gray-700 mb-2">
+                No Jobs Posted Yet
+              </h3>
+              <p className="text-gray-600">
+                Click "Post New Job" to get started!
+              </p>
             </div>
-            <h3 className="text-xl font-bold text-gray-700 mb-2">No Jobs Posted Yet</h3>
-            <p className="text-gray-600">Click "Post New Job" to get started!</p>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              {employerJobs.map((job) => (
+                <div
+                  key={job._id}
+                  className="bg-white rounded-xl p-6 shadow-md border border-gray-200"
+                >
+                  <h3 className="text-xl font-bold">{job.title}</h3>
+                  <p className="text-gray-600">{job.category}</p>
+                  <p className="text-gray-600">📍 {job.location}</p>
+                  <p className="text-gray-700 mt-2">{job.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
-      {/* Post Job Modal with Image Upload */}
+      {/* POST JOB MODAL */}
       {showPostJobModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -82,165 +145,162 @@ export default function EmployerJobs() {
               <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Post New Job
               </h2>
+
               <button
                 onClick={() => setShowPostJobModal(false)}
-                className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-all"
+                className="text-gray-500 hover:text-gray-700 p-2 rounded-full"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                ✖
               </button>
             </div>
-            
+
+            {/* FORM */}
             <div className="space-y-5">
-              {/* Job Title */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Job Title <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold">
+                  Job Title *
                 </label>
                 <input
                   type="text"
                   value={jobData.title}
-                  onChange={(e) => setJobData({...jobData, title: e.target.value})}
-                  placeholder="e.g., Plumber Needed for Kitchen Repair"
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                  onChange={(e) =>
+                    setJobData({ ...jobData, title: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border-2 rounded-xl"
                 />
               </div>
 
-              {/* Category */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Category <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold">
+                  Category *
                 </label>
-                <select 
+                <select
                   value={jobData.category}
-                  onChange={(e) => setJobData({...jobData, category: e.target.value})}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                  onChange={(e) =>
+                    setJobData({ ...jobData, category: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border-2 rounded-xl"
                 >
                   <option value="">Select category</option>
-                  <option value="plumbing">🔧 Plumbing</option>
-                  <option value="electrical">⚡ Electrical</option>
-                  <option value="carpentry">🪚 Carpentry</option>
-                  <option value="painting">🎨 Painting</option>
-                  <option value="cleaning">🧹 Cleaning</option>
-                  <option value="gardening">🌱 Gardening</option>
-                  <option value="ac_repair">❄️ AC Repair</option>
-                  <option value="other">📦 Other</option>
+                  <option value="Plumbing">Plumbing</option>
+                  <option value="Electrical">Electrical</option>
+                  <option value="Carpentry">Carpentry</option>
+                  <option value="Painting">Painting</option>
+                  <option value="Cleaning">Cleaning</option>
+                  <option value="Gardening">Gardening</option>
                 </select>
               </div>
 
-              {/* Image Upload - NEW FEATURE */}
-              <div className="border-2 border-dashed border-blue-300 rounded-xl p-4 bg-blue-50/30">
+              <div className="border-2 border-dashed rounded-xl p-4 bg-blue-50/30">
                 <ImageUploader
-                  label="📸 Job Image (Optional - Show the problem)"
+                  label="Job Image (Optional)"
                   onImageUpload={handleImageUpload}
                   existingImage={jobImage?.preview}
                   maxSize={5}
                 />
-                <p className="text-xs text-gray-500 mt-2 text-center">
-                  💡 Upload a photo of the problem area to help workers understand the job better
-                </p>
               </div>
 
-              {/* Description */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Description <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold">
+                  Description *
                 </label>
                 <textarea
                   value={jobData.description}
-                  onChange={(e) => setJobData({...jobData, description: e.target.value})}
+                  onChange={(e) =>
+                    setJobData({ ...jobData, description: e.target.value })
+                  }
                   rows="4"
-                  placeholder="Describe the work that needs to be done in detail... Include any specific requirements or tools needed."
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border-2 rounded-xl"
                 />
               </div>
 
-              {/* Rate and Duration */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Hourly Rate <span className="text-red-500">*</span>
+                  <label className="block text-sm font-semibold">
+                    Rate (₹)
                   </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-3 text-gray-500 font-semibold">₹</span>
-                    <input
-                      type="number"
-                      value={jobData.rate}
-                      onChange={(e) => setJobData({...jobData, rate: e.target.value})}
-                      placeholder="500"
-                      className="w-full pl-8 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
-                    />
-                  </div>
+                  <input
+                    type="number"
+                    value={jobData.rate}
+                    onChange={(e) =>
+                      setJobData({ ...jobData, rate: e.target.value })
+                    }
+                    className="w-full px-4 py-3 border-2 rounded-xl"
+                  />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Duration <span className="text-red-500">*</span>
+                  <label className="block text-sm font-semibold">
+                    Duration
                   </label>
                   <input
                     type="text"
                     value={jobData.duration}
-                    onChange={(e) => setJobData({...jobData, duration: e.target.value})}
-                    placeholder="e.g., 2-3 hours"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                    onChange={(e) =>
+                      setJobData({ ...jobData, duration: e.target.value })
+                    }
+                    className="w-full px-4 py-3 border-2 rounded-xl"
                   />
                 </div>
               </div>
 
-              {/* Location */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Location <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold">
+                  Location *
                 </label>
                 <input
                   type="text"
                   value={jobData.location}
-                  onChange={(e) => setJobData({...jobData, location: e.target.value})}
-                  placeholder="Enter detailed location (Area, Landmark, City)"
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                  onChange={(e) =>
+                    setJobData({ ...jobData, location: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border-2 rounded-xl"
                 />
               </div>
 
-              {/* Preferred Date */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Preferred Date <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold">
+                  Preferred Date *
                 </label>
                 <input
                   type="date"
                   value={jobData.date}
-                  onChange={(e) => setJobData({...jobData, date: e.target.value})}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                  onChange={(e) =>
+                    setJobData({ ...jobData, date: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border-2 rounded-xl"
                 />
               </div>
 
-              {/* Urgent Checkbox */}
-              <div className="flex items-center gap-3 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
-                <input 
-                  type="checkbox" 
-                  id="urgent" 
+              <div className="flex items-center gap-3 p-4 bg-yellow-50 border-2 rounded-xl">
+                <input
+                  type="checkbox"
                   checked={jobData.urgent}
-                  onChange={(e) => setJobData({...jobData, urgent: e.target.checked})}
-                  className="w-5 h-5 text-yellow-600 rounded focus:ring-2 focus:ring-yellow-400" 
+                  onChange={(e) =>
+                    setJobData({ ...jobData, urgent: e.target.checked })
+                  }
                 />
-                <label htmlFor="urgent" className="text-sm font-semibold text-gray-700 cursor-pointer">
-                  ⚡ Mark as urgent (your job will appear at the top with a red badge)
+                <label className="text-sm font-semibold">
+                  ⚡ Mark as urgent
                 </label>
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* BUTTONS */}
             <div className="flex gap-4 mt-8">
               <button
                 onClick={() => setShowPostJobModal(false)}
-                className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-all font-semibold text-gray-700"
+                className="flex-1 px-6 py-3 border-2 rounded-xl"
               >
                 Cancel
               </button>
+
               <button
                 onClick={handlePostJob}
-                disabled={!jobData.title || !jobData.category || !jobData.description}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                disabled={
+                  !jobData.title || !jobData.category || !jobData.description
+                }
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl"
               >
                 🚀 Post Job
               </button>

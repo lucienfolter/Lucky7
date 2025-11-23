@@ -3,23 +3,37 @@ const router = express.Router();
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
+
 // Register User
 router.post("/register", async (req, res) => {
   try {
-    const user = await User.create(req.body);
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+    const { fullName, email, phone, password, role } = req.body;
+
+    const user = await User.create({
+      fullName,
+      email,
+      phone,
+      password,
+      role,  // <--- important
     });
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.status(201).json({
       success: true,
       token,
       user: user.getPublicProfile(),
     });
+
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
 
 // Login User
 router.post("/login", async (req, res) => {
