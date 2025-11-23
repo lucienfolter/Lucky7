@@ -1,20 +1,39 @@
-// routes/upload.js
-const router = require("express").Router();
-const upload = require("../middleware/upload");
-const fs = require("fs");
-const path = require('path');
+const express = require("express");
+const router = express.Router();
 
-router.post("/image", upload.single("image"), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-    const localPath = req.file.path;
-    const filename = path.basename(localPath);
-    // Keep the local file so it's available via /uploads static route
-    return res.json({ url: `/uploads/${filename}`, publicId: null });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
+const upload = require("../middleware/upload");
+
+// Single image upload
+router.post("/single", upload.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      message: "No file uploaded",
+    });
   }
+
+  res.json({
+    success: true,
+    fileUrl: `/uploads/${req.file.filename}`,
+  });
+});
+
+// Multiple image upload (optional)
+router.post("/multiple", upload.array("images", 5), (req, res) => {
+  if (!req.files) {
+    return res.status(400).json({
+      success: false,
+      message: "No files uploaded",
+    });
+  }
+
+  const files = req.files.map((file) => `/uploads/${file.filename}`);
+
+  res.json({
+    success: true,
+    files,
+  });
 });
 
 module.exports = router;
+

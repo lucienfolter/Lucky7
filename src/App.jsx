@@ -1,4 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { SocketProvider } from "./context/SocketContext";
+
 import Login from "./pages/Login";
 import LoginForm from "./pages/LoginForm";
 import Register from "./pages/Register";
@@ -24,32 +27,36 @@ import EmployerVerification from "./pages/EmployerVerification";
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Public */}
-        <Route path="/" element={<Login />} />
-        <Route path="/login" element={<LoginForm />} />
-        <Route path="/register" element={<Register />} />
-        
-        {/* Employee Routes */}
-        <Route path="/dashboard" element={<DashBoard />} />
-        <Route path="/employee-profile" element={<EmployeeProfile />} />
-        <Route path="/employee-jobs" element={<EmployeeJobs />} />
-        <Route path="/employee-messages" element={<EmployeeMessages />} />
-        <Route path="/employee-wallet" element={<EmployeeWallet />} />
-        <Route path="/employee-settings" element={<EmployeeSettings />} />
-        <Route path="/employee-verification" element={<EmployeeVerification />} />
-        
-        {/* Employer Routes */}
-        <Route path="/employer-dashboard" element={<EmployerDashboard />} />
-        <Route path="/profile" element={<EmployerProfile />} />
-        <Route path="/employer-jobs" element={<EmployerJobs />} />
-        <Route path="/employer-post-job" element={<EmployerPostJob />} />
-        <Route path="/messages" element={<EmployerMessages />} />
-        <Route path="/wallet" element={<EmployerWallet />} />
-        <Route path="/settings" element={<EmployerSettings />} />
-        <Route path="/employer-verification" element={<EmployerVerification />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <SocketProvider>
+        <Router>
+          <Routes>
+            {/* Public */}
+            <Route path="/" element={<Login />} />
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/register" element={<Register />} />
+            
+            {/* Employee Routes */}
+            <Route path="/dashboard" element={<DashBoard />} />
+            <Route path="/employee-profile" element={<EmployeeProfile />} />
+            <Route path="/employee-jobs" element={<EmployeeJobs />} />
+            <Route path="/employee-messages" element={<EmployeeMessages />} />
+            <Route path="/employee-wallet" element={<EmployeeWallet />} />
+            <Route path="/employee-settings" element={<EmployeeSettings />} />
+            <Route path="/employee-verification" element={<EmployeeVerification />} />
+            
+            {/* Employer Routes */}
+            <Route path="/employer-dashboard" element={<EmployerDashboard />} />
+            <Route path="/profile" element={<EmployerProfile />} />
+            <Route path="/employer-jobs" element={<EmployerJobs />} />
+            <Route path="/employer-post-job" element={<EmployerPostJob />} />
+            <Route path="/messages" element={<EmployerMessages />} />
+            <Route path="/wallet" element={<EmployerWallet />} />
+            <Route path="/settings" element={<EmployerSettings />} />
+            <Route path="/employer-verification" element={<EmployerVerification />} />
+          </Routes>
+        </Router>
+      </SocketProvider>
+    </AuthProvider>
   );
 }

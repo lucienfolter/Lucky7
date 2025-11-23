@@ -1,81 +1,117 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "../Components/Sidebar";
-import axios from "axios";
+import { getAllJobs, applyForJob, getMyApplications } from "../services/jobService";
+import { useAuth } from "../context/AuthContext";
 
 export default function EmployeeJobs() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+
   const [activeTab, setActiveTab] = useState("browse");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [myApplications, setMyApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = ["all", "Plumbing", "Electrical", "Carpentry", "Painting", "Cleaning"];
+  const token = localStorage.getItem("token");
 
-  // Fetch jobs from backend
+  // ⭐ FETCH JOBS + APPLICATIONS
+  const loadJobs = async () => {
+    try {
+      const [jobsRes, appsRes] = await Promise.all([
+        getAllJobs(),
+        getMyApplications(user._id, token),
+      ]);
+
+      setJobs(jobsRes.data.jobs || []);
+      setMyApplications(appsRes.data.applications || []);
+    } catch (error) {
+      console.error("❌ Failed to load jobs:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/jobs");
-        setJobs(res.data);
-      } catch (error) {
-        console.error("Failed to fetch jobs", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (user?._id) loadJobs();
+  }, [user]);
 
-    fetchJobs();
-  }, []);
+  // ⭐ Check if applied
+  const isApplied = (jobId) =>
+    myApplications.some((a) => a.jobId?._id === jobId);
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch =
-      job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.description?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesCategory = selectedCategory === "all" || job.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
-
-  const handleApply = (job) => {
-    const alreadyApplied = myApplications.some(app => app.jobId === job._id);
-
-    if (alreadyApplied) {
-      alert("❌ You have already applied for this job!");
+  // ⭐ Apply for a job
+  const handleApply = async (job) => {
+    if (isApplied(job._id)) {
+      alert("❌ You already applied for this job!");
       return;
     }
 
-    const newApplication = {
-      id: myApplications.length + 1,
-      jobId: job._id,
-      jobTitle: job.title,
-      employer: "Employer", // update when auth is added
-      status: "Pending",
-      appliedDate: "Just now",
-      rate: job.rate
-    };
+    try {
+      await applyForJob(
+        job._id,
+        {
+          coverLetter: "",
+          proposedRate: job.rate,
+        },
+        token
+      );
 
-    setMyApplications([...myApplications, newApplication]);
-    alert("✅ Application submitted successfully!");
+      alert("✅ Application submitted!");
 
-    setTimeout(() => setActiveTab("applications"), 1000);
+      // Add to list instantly
+      setMyApplications((prev) => [
+        ...prev,
+        {
+          jobId: job,
+          status: "Pending",
+          appliedAt: new Date().toISOString(),
+        },
+      ]);
+
+      setActiveTab("applications");
+    } catch (error) {
+      console.error("Apply error:", error);
+      alert("❌ Failed to apply!");
+    }
   };
 
-  const isApplied = (jobId) => {
-    return myApplications.some(app => app.jobId === jobId);
-  };
+  // ⭐ SAFE FILTERS (No Crash)
+  const filteredJobs = jobs.filter((job) => {
+    const title = job.title || "";
+    const desc = job.description || "";
+    const category = job.category || "";
 
-  if (loading) {
+    const matchesText =
+      title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      desc.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesCategory =
+      selectedCategory === "all" ||
+      category.toLowerCase() === selectedCategory.toLowerCase();
+
+    return matchesText && matchesCategory;
+  });
+
+  const categories = [
+    "all",
+    "Plumbing",
+    "Electrical",
+    "Carpentry",
+    "Painting",
+    "Cleaning",
+    "Gardening",
+  ];
+
+  if (loading)
     return (
-      <div className="flex items-center justify-center h-screen text-xl font-semibold">
-        Loading jobs...
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-gray-500 text-xl">Loading jobs...</p>
       </div>
     );
-  }
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
@@ -83,52 +119,54 @@ export default function EmployeeJobs() {
 
       <main className="flex-1 p-10">
         <header className="text-4xl font-extrabold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-8">
-          JOB OPPORTUNITIES
+          Job Opportunities
         </header>
 
-        {/* Tabs */}
+        {/* ⭐ Tabs */}
         <div className="flex gap-4 mb-6">
           <button
             onClick={() => setActiveTab("browse")}
-            className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+            className={`px-6 py-3 rounded-xl font-semibold ${
               activeTab === "browse"
-                ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg"
-                : "bg-white text-gray-700 border-2 border-gray-300 hover:border-green-400"
+                ? "bg-green-600 text-white shadow-lg"
+                : "bg-white border-2 border-gray-300 text-gray-700"
             }`}
           >
             Browse Jobs ({jobs.length})
           </button>
+
           <button
             onClick={() => setActiveTab("applications")}
-            className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+            className={`px-6 py-3 rounded-xl font-semibold ${
               activeTab === "applications"
-                ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg"
-                : "bg-white text-gray-700 border-2 border-gray-300 hover:border-green-400"
+                ? "bg-green-600 text-white shadow-lg"
+                : "bg-white border-2 border-gray-300 text-gray-700"
             }`}
           >
             My Applications ({myApplications.length})
           </button>
         </div>
 
-        {/* Browse Jobs Tab */}
+        {/* ⭐ BROWSE JOBS */}
         {activeTab === "browse" && (
           <div>
-            {/* Search + Filter */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-6 border border-green-200">
+            {/* Search + Category */}
+            <div className="bg-white p-6 rounded-xl shadow mb-6">
               <div className="flex flex-col md:flex-row gap-4">
                 <input
                   type="text"
-                  placeholder="🔍 Search jobs..."
+                  placeholder="Search jobs..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+                  className="flex-1 px-4 py-3 border-2 rounded-xl"
                 />
+
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+                  className="px-4 py-3 border-2 rounded-xl"
                 >
-                  {categories.map(cat => (
+                  {categories.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat === "all" ? "All Categories" : cat}
                     </option>
@@ -137,43 +175,43 @@ export default function EmployeeJobs() {
               </div>
             </div>
 
-            {/* Jobs List */}
+            {/* ⭐ Job List */}
             <div className="space-y-4">
               {filteredJobs.length > 0 ? (
-                filteredJobs.map(job => (
+                filteredJobs.map((job) => (
                   <div
                     key={job._id}
-                    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-green-200 hover:shadow-2xl hover:-translate-y-1 transition-all"
+                    className="bg-white rounded-xl shadow-xl p-6 border border-green-200 hover:shadow-2xl"
                   >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-xl font-bold text-gray-800">{job.title}</h3>
-                        </div>
-
-                        <p className="text-gray-600 mb-2">
-                          <span className="font-semibold">📍 Location:</span> {job.location}
-                        </p>
+                    <div className="flex justify-between">
+                      <div>
+                        <h3 className="text-xl font-bold">{job.title}</h3>
+                        <p className="text-gray-600">📍 {job.location}</p>
+                        <p className="text-gray-600">🧰 {job.category}</p>
                       </div>
+
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-green-600">{job.rate}</p>
-                        <p className="text-sm text-gray-500">⏱️ {job.duration}</p>
+                        <p className="text-2xl font-bold text-green-600">
+                          ₹{job.rate}
+                        </p>
+                        <p className="text-gray-500">{job.duration}</p>
                       </div>
                     </div>
 
-                    <p className="text-gray-700 mb-4">{job.description}</p>
+                    <p className="text-gray-700 mt-4">{job.description}</p>
 
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
+                    <div className="flex justify-between items-center mt-4 border-t pt-4">
+                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full">
                         {job.category}
                       </span>
+
                       <button
                         onClick={() => handleApply(job)}
                         disabled={isApplied(job._id)}
-                        className={`px-6 py-2 rounded-xl font-semibold transition-all ${
+                        className={`px-6 py-2 rounded-xl font-semibold ${
                           isApplied(job._id)
                             ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                            : "bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-lg"
+                            : "bg-green-600 text-white shadow-lg"
                         }`}
                       >
                         {isApplied(job._id) ? "✓ Applied" : "Apply Now"}
@@ -182,27 +220,44 @@ export default function EmployeeJobs() {
                   </div>
                 ))
               ) : (
-                <div className="text-center p-6 text-gray-600">No jobs found</div>
+                <p className="text-center text-gray-600">
+                  No jobs found.
+                </p>
               )}
             </div>
           </div>
         )}
 
-        {/* My Applications */}
+        {/* ⭐ APPLICATIONS TAB */}
         {activeTab === "applications" && (
           <div className="space-y-4">
-            {myApplications.length > 0 ? (
-              myApplications.map(app => (
+            {myApplications.length === 0 ? (
+              <div className="text-center p-12 bg-white rounded-xl shadow">
+                <p className="text-xl text-gray-700 mb-2">
+                  No applications yet
+                </p>
+                <p className="text-gray-600">
+                  Apply to jobs to see them here.
+                </p>
+              </div>
+            ) : (
+              myApplications.map((app, index) => (
                 <div
-                  key={app.id}
-                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-blue-200"
+                  key={index}
+                  className="bg-white rounded-xl shadow-xl p-6 border border-blue-200"
                 >
-                  <h3 className="text-xl font-bold text-gray-800">{app.jobTitle}</h3>
-                  <p className="text-gray-600 mt-2">📅 Applied: {app.appliedDate}</p>
+                  <h3 className="text-xl font-bold">
+                    {app.jobId?.title}
+                  </h3>
+                  <p>📅 Applied: {new Date(app.appliedAt).toLocaleDateString()}</p>
+                  <p>
+                    📝 Status:{" "}
+                    <span className="font-semibold">
+                      {app.status || "Pending"}
+                    </span>
+                  </p>
                 </div>
               ))
-            ) : (
-              <div className="text-center p-6 text-gray-600">No applications yet</div>
             )}
           </div>
         )}

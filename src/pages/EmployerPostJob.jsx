@@ -46,7 +46,7 @@ export default function EmployerPostJob() {
 
           {/* title */}
           <div>
-            <label className="block text-sm font-semibold">{t("form.jobTitle")}</label>
+            <label className="block text-sm font-semibold">{t("jobTitle")}</label>
             <input
               className="w-full mt-1 border px-4 py-2 rounded-lg"
               value={form.title}
@@ -58,7 +58,7 @@ export default function EmployerPostJob() {
           {/* category + location */}
           <div className="grid sm:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-semibold">{t("form.category")}</label>
+              <label className="block text-sm font-semibold">{t("category")}</label>
               <select
                 className="w-full mt-1 border px-4 py-2 rounded-lg"
                 value={form.category}
@@ -72,7 +72,7 @@ export default function EmployerPostJob() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold">{t("form.location")}</label>
+              <label className="block text-sm font-semibold">{t("location")}</label>
               <input
                 className="w-full mt-1 border px-4 py-2 rounded-lg"
                 value={form.location}
@@ -83,7 +83,7 @@ export default function EmployerPostJob() {
 
           {/* rate */}
           <div>
-            <label className="block text-sm font-semibold">{t("form.rate")}</label>
+            <label className="block text-sm font-semibold">{t("rate")}</label>
             <input
               className="w-full mt-1 border px-4 py-2 rounded-lg"
               value={form.rate}
@@ -93,7 +93,7 @@ export default function EmployerPostJob() {
 
           {/* description */}
           <div>
-            <label className="block text-sm font-semibold">{t("form.description")}</label>
+            <label className="block text-sm font-semibold">{t("description")}</label>
             <textarea
               className="w-full mt-1 border px-4 py-2 rounded-lg h-28"
               value={form.description}
@@ -106,7 +106,7 @@ export default function EmployerPostJob() {
 
           {/* buttons */}
           <button type="submit" className="px-8 py-3 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg text-white font-semibold">
-            {loading ? "..." : t("form.post")}
+            {loading ? "..." : t("post")}
           </button>
         </form>
       </main>
