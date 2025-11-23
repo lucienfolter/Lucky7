@@ -1,14 +1,13 @@
-const cloudinary = require("../config/cloudinary");
+const path = require('path');
 const Job = require("../models/Job");
 
 exports.createJob = async (req, res) => {
   try {
     let image = {};
     if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "jobs"
-      });
-      image = { url: result.secure_url, publicId: result.public_id };
+      // Multer stores file in uploads/ with filename created by middleware
+      const filename = path.basename(req.file.path);
+      image = { url: `/uploads/${filename}`, path: req.file.path };
     }
 
     const job = await Job.create({

@@ -1,11 +1,12 @@
-// config/cloudinary.js
-const cloudinary = require("cloudinary").v2;
-require("dotenv").config();
+// Cloudinary has been removed from this project.
+// This stub file remains to avoid require() errors during transition.
+// Do NOT use this module. Remove this file entirely after running
+// `npm uninstall cloudinary` in the backend folder.
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-module.exports = cloudinary;
+module.exports = {
+  uploader: {
+    upload: async () => {
+      throw new Error('Cloudinary has been removed. Run `npm uninstall cloudinary` and remove this file.');
+    }
+  }
+};
