@@ -115,7 +115,7 @@ export default function EmployerDashboard() {
                 className="group relative cursor-pointer"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden transform transition-all duration-500 hover:-translate-y-3 hover:shadow-3xl">
+                <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden h-full flex flex-col flex-grow transform transition-all duration-500 hover:-translate-y-3 hover:shadow-3xl">
                   <div className={`relative h-32 bg-gradient-to-br ${action.gradient} p-6 overflow-hidden`}>
                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/20 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-700" />
                     

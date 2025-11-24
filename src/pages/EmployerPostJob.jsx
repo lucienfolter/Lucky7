@@ -1,115 +1,202 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import SidebarEmployer from "../Components/SidebarEmployer";
-import ImageUploader from "../Components/ImageUploader";
-import { useTranslation } from "react-i18next";
 import axios from "axios";
 
-export default function EmployerPostJob() {
+export default function EmployerJobs() {
   const { t } = useTranslation();
+  const [showPostJobModal, setShowPostJobModal] = useState(false);
+  const [jobs, setJobs] = useState([]);
 
-  const [form, setForm] = useState({
-    title: "",
-    category: "Plumbing",
-    location: "",
-    rate: "",
-    description: "",
+  const [jobData, setJobData] = useState({
+    title: '',
+    category: '',
+    description: '',
+    rate: '',
+    duration: '',
+    location: '',
+    date: '',
+    urgent: false
   });
 
-  const [imageData, setImageData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  // Input handler
+  const handleChange = (e) => {
+    setJobData({ ...jobData, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleCheckbox = () => {
+    setJobData({ ...jobData, urgent: !jobData.urgent });
+  };
+
+  // Fetch jobs
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/jobs");
+        setJobs(response.data);
+      } catch (error) {
+        console.error("Error fetching jobs:", error);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  // Post job
+  const handlePostJob = async () => {
+    try {
+      const response = await axios.post("http://localhost:5000/api/jobs", jobData);
+      alert("Job posted successfully!");
+
+      setJobs([response.data.job, ...jobs]);
+      setShowPostJobModal(false);
+
+      setJobData({
+        title: '',
+        category: '',
+        description: '',
+        rate: '',
+        duration: '',
+        location: '',
+        date: '',
+        urgent: false
+      });
+    } catch (error) {
+      alert("Failed to post job");
+      console.error(error);
+    }
+  };
+
+  // Delete job
+  const handleDeleteJob = async (jobId) => {
+    if (!window.confirm("Are you sure you want to delete this job?")) return;
 
     try {
-      const payload = { ...form, image: imageData };
-      await axios.post(import.meta.env.VITE_API_BASE + "/jobs/create", payload, { withCredentials: true });
-      alert("Job posted successfully!");
-      window.location.href = "/employer-jobs";
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to post job");
+      await axios.delete(`http://localhost:5000/api/jobs/${jobId}`);
+      setJobs(jobs.filter((job) => job._id !== jobId));
+      alert("Job deleted successfully!");
+    } catch (error) {
+      alert("Failed to delete job");
+      console.error("Error deleting job:", error);
     }
-    setLoading(false);
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
       <SidebarEmployer />
 
       <main className="flex-1 p-10">
-        <h1 className="text-4xl font-extrabold text-green-700 dark:text-green-300 mb-10">
-          {t("postJob")}
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-extrabold text-blue-700">
+            {t('jobs.title')}
+          </h1>
 
-        <form onSubmit={handleSubmit} className="glass p-10 rounded-xl max-w-3xl space-y-6">
-
-          {/* title */}
-          <div>
-            <label className="block text-sm font-semibold">{t("form.jobTitle")}</label>
-            <input
-              className="w-full mt-1 border px-4 py-2 rounded-lg"
-              value={form.title}
-              name="title"
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-          </div>
-
-          {/* category + location */}
-          <div className="grid sm:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-sm font-semibold">{t("form.category")}</label>
-              <select
-                className="w-full mt-1 border px-4 py-2 rounded-lg"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-              >
-                <option>Plumbing</option>
-                <option>Electrical</option>
-                <option>Carpentry</option>
-                <option>Painting</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold">{t("form.location")}</label>
-              <input
-                className="w-full mt-1 border px-4 py-2 rounded-lg"
-                value={form.location}
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
-              />
-            </div>
-          </div>
-
-          {/* rate */}
-          <div>
-            <label className="block text-sm font-semibold">{t("form.rate")}</label>
-            <input
-              className="w-full mt-1 border px-4 py-2 rounded-lg"
-              value={form.rate}
-              onChange={(e) => setForm({ ...form, rate: e.target.value })}
-            />
-          </div>
-
-          {/* description */}
-          <div>
-            <label className="block text-sm font-semibold">{t("form.description")}</label>
-            <textarea
-              className="w-full mt-1 border px-4 py-2 rounded-lg h-28"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-            />
-          </div>
-
-          {/* uploader */}
-          <ImageUploader onUploadComplete={(url, publicId) => setImageData({ url, publicId })} label={t("form.uploadImage")} />
-
-          {/* buttons */}
-          <button type="submit" className="px-8 py-3 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg text-white font-semibold">
-            {loading ? "..." : t("form.post")}
+          <button
+            onClick={() => setShowPostJobModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition font-semibold shadow"
+          >
+            + Post New Job
           </button>
-        </form>
+        </div>
+
+        {/* Job List */}
+        {jobs.length === 0 ? (
+          <p className="text-center text-gray-600 text-lg">No jobs posted yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {jobs.map((job) => (
+              <div key={job._id} className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                <h3 className="text-xl font-bold text-blue-600">{job.title}</h3>
+                <p className="text-gray-700 mt-1">{job.description}</p>
+                <ul className="mt-3 text-sm text-gray-600 space-y-1">
+                  <li><strong>Category:</strong> {job.category}</li>
+                  <li><strong>Rate:</strong> ₹{job.rate}</li>
+                  <li><strong>Duration:</strong> {job.duration}</li>
+                  <li><strong>Location:</strong> {job.location}</li>
+                  <li><strong>Date:</strong> {job.date}</li>
+                </ul>
+                {job.urgent && <p className="mt-2 text-red-600 font-bold">🚨 URGENT</p>}
+
+                <button
+                  onClick={() => handleDeleteJob(job._id)}
+                  className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg"
+                >
+                  Delete Job
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
+
+      {/* Modal */}
+      {showPostJobModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-3xl rounded-xl p-8 shadow-xl overflow-y-auto max-h-[90vh]">
+
+            <h2 className="text-2xl font-bold text-blue-700 mb-4">
+              Post a New Job
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <Input label="Job Title" name="title" value={jobData.title} onChange={handleChange} />
+              <Input label="Category" name="category" value={jobData.category} onChange={handleChange} />
+              <Input label="Daily Rate (₹)" name="rate" value={jobData.rate} onChange={handleChange} />
+              <Input label="Duration" name="duration" value={jobData.duration} onChange={handleChange} />
+              <Input label="Location" name="location" value={jobData.location} onChange={handleChange} />
+              <Input label="Date" type="date" name="date" value={jobData.date} onChange={handleChange} />
+
+              <div className="md:col-span-2">
+                <label className="block mb-1 font-semibold">
+                  Job Description
+                </label>
+                <textarea
+                  name="description"
+                  value={jobData.description}
+                  onChange={handleChange}
+                  rows={4}
+                  className="w-full border rounded-lg px-3 py-2"
+                  placeholder="Describe the work..."
+                />
+              </div>
+
+              <div className="flex items-center gap-2 md:col-span-2">
+                <input type="checkbox" checked={jobData.urgent} onChange={handleCheckbox} />
+                <span className="font-semibold">Mark as Urgent</span>
+              </div>
+
+            </div>
+
+            <div className="flex gap-4 mt-6">
+              <button
+                onClick={() => setShowPostJobModal(false)}
+                className="flex-1 bg-gray-300 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePostJob}
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+              >
+                Post Job
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Input({ label, ...rest }) {
+  return (
+    <div>
+      <label className="block mb-1 font-semibold">{label}</label>
+      <input
+        {...rest}
+        className="w-full border rounded-lg px-3 py-2"
+      />
     </div>
   );
 }

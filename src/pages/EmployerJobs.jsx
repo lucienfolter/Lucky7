@@ -133,8 +133,95 @@ export default function EmployerJobs() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
 
-            {/* same form and buttons as before */}
-            {/* ... (unchanged content omitted for brevity) ... */}
+            {showPostJobModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+    <div className="bg-white rounded-2xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <h2 className="text-2xl font-bold mb-4">Post New Job</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input
+          type="text"
+          placeholder="Job Title"
+          className="border p-3 rounded-lg"
+          value={jobData.title}
+          onChange={(e) => setJobData({ ...jobData, title: e.target.value })}
+        />
+
+        <input
+          type="text"
+          placeholder="Category"
+          className="border p-3 rounded-lg"
+          value={jobData.category}
+          onChange={(e) => setJobData({ ...jobData, category: e.target.value })}
+        />
+
+        <input
+          type="text"
+          placeholder="Rate (₹)"
+          className="border p-3 rounded-lg"
+          value={jobData.rate}
+          onChange={(e) => setJobData({ ...jobData, rate: e.target.value })}
+        />
+
+        <input
+          type="text"
+          placeholder="Duration"
+          className="border p-3 rounded-lg"
+          value={jobData.duration}
+          onChange={(e) => setJobData({ ...jobData, duration: e.target.value })}
+        />
+
+        <input
+          type="text"
+          placeholder="Location"
+          className="border p-3 rounded-lg"
+          value={jobData.location}
+          onChange={(e) => setJobData({ ...jobData, location: e.target.value })}
+        />
+
+        <input
+          type="date"
+          className="border p-3 rounded-lg"
+          value={jobData.date}
+          onChange={(e) => setJobData({ ...jobData, date: e.target.value })}
+        />
+      </div>
+
+      <textarea
+        placeholder="Job Description"
+        className="border rounded-lg p-3 w-full mt-4"
+        rows="4"
+        value={jobData.description}
+        onChange={(e) => setJobData({ ...jobData, description: e.target.value })}
+      />
+
+      <label className="flex items-center gap-2 mt-4">
+        <input
+          type="checkbox"
+          checked={jobData.urgent}
+          onChange={(e) => setJobData({ ...jobData, urgent: e.target.checked })}
+        />
+        <span>Mark as urgent</span>
+      </label>
+
+      <div className="flex gap-4 mt-8">
+        <button
+          onClick={() => setShowPostJobModal(false)}
+          className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handlePostJob}
+          className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl"
+        >
+          Post Job
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
             <div className="flex gap-4 mt-8">
               <button
