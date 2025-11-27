@@ -1,0 +1,7 @@
+{
+  "login": { "title": "DailyWage — Find work instantly", "subtitle": "Get verified, get hired — quick local jobs.", "employee": "I'm a Worker", "employeeDesc": "Find short-term jobs & daily work", "employer": "I'm an Employer", "employerDesc": "Post jobs and hire local workers" },
+  "nav": { "dashboard": "Dashboard", "profile": "Profile", "jobs": "Jobs", "messages": "Messages", "wallet": "Wallet", "settings": "Settings", "postJob": "Post Job", "logout": "Logout" },
+  "form": { "jobTitle": "Job Title", "category": "Category", "location": "Location", "rate": "Rate (₹/hr)", "description": "Description", "uploadImage": "Upload job image", "post": "Post Job" },
+  "verification": { "title": "Identity Verification", "uploadDoc": "Upload ID Document", "takeSelfie": "Take a Live Selfie", "submit": "Submit for Verification" },
+  "ui": { "changeTheme": "Toggle Dark Mode" }
+}
