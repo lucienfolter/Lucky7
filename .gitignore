@@ -1,0 +1,58 @@
+###############################
+# Node / MERN Full-Stack Ignore
+###############################
+
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build & Output
+dist/
+build/
+client/dist/
+client/build/
+server/dist/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Environment Config
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Uploads or temp storage
+uploads/
+public/uploads/
+tmp/
+temp/
+
+# IDE / System / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Cache Files
+.cache/
+.eslintcache
+.parcel-cache
+.next/
+out/
+
+# Others
+*.pid
+*.seed
+*.tgz
+*.local
+
