@@ -1,13 +1,26 @@
-// middleware/auth.js
+const jwt = require('jsonwebtoken');
+
 module.exports = (req, res, next) => {
-  // placeholder — if you have JWT/session, replace logic
-  // For development, allow unauthenticated by setting req.user
-  // In production you must verify token and set req.user.id
   try {
-    // Example: set a fake user id if not present (remove for production)
-    req.user = { id: process.env.DEV_TEST_USER_ID || null };
+    // Get token from header
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'No authentication token, access denied' 
+      });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = { id: decoded.id, role: decoded.role };
+    
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Unauthorized" });
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token verification failed, authorization denied' 
+    });
   }
 };

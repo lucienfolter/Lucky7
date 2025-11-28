@@ -1,22 +1,57 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '../Components/Sidebar';
+import axios from 'axios';
 
 export default function EmployeeProfile() {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    fullName: 'Rajesh Kumar',
-    email: 'rajesh@example.com',
-    phone: '+91 9876543210',
-    location: 'Mumbai, Maharashtra',
-    dateOfBirth: '1995-05-15',
-    gender: 'Male',
-    skills: 'Plumbing, Electrical Work',
-    experience: '5 years',
-    hourlyRate: '₹500',
-    bio: 'Experienced handyman with expertise in multiple trades.'
+    fullName: '',
+    email: '',
+    phone: '',
+    location: '',
+    dateOfBirth: '',
+    gender: '',
+    skills: '',
+    experience: '',
+    hourlyRate: '',
+    bio: ''
   });
+
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const user = response.data.user;
+      setFormData({
+        fullName: user.fullName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        location: user.location?.address || '',
+        dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split('T')[0] : '',
+        gender: user.gender || 'Male',
+        skills: user.skills?.join(', ') || '',
+        experience: user.experience || '',
+        hourlyRate: user.hourlyRate ? `₹${user.hourlyRate}` : '',
+        bio: user.bio || ''
+      });
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      alert('Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -25,10 +60,40 @@ export default function EmployeeProfile() {
     });
   };
 
-  const handleSubmit = () => {
-    setIsEditing(false);
-    alert('Profile updated successfully!');
+  const handleSubmit = async () => {
+    try {
+      const updateData = {
+        fullName: formData.fullName,
+        phone: formData.phone,
+        location: { address: formData.location },
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        skills: formData.skills.split(',').map(s => s.trim()),
+        experience: formData.experience,
+        hourlyRate: parseInt(formData.hourlyRate.replace('₹', '')),
+        bio: formData.bio
+      };
+
+      await axios.put('http://localhost:5000/api/auth/update-profile', updateData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      alert('Profile updated successfully!');
+      setIsEditing(false);
+      fetchUserProfile();
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-xl font-semibold">Loading profile...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
@@ -44,7 +109,7 @@ export default function EmployeeProfile() {
           <div className="flex items-center gap-6 mb-8 pb-6 border-b border-gray-200">
             <div className="w-32 h-32 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
               <span className="text-5xl text-white font-bold">
-                {formData.fullName.charAt(0)}
+                {formData.fullName.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="flex-1">
@@ -55,7 +120,7 @@ export default function EmployeeProfile() {
                   <svg xmlns="http://www.w3.org/2000/svg" fill="green" viewBox="0 0 24 24" width="16" height="16">
                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                   </svg>
-                  Verified
+                  Active
                 </span>
               </div>
             </div>
@@ -87,9 +152,8 @@ export default function EmployeeProfile() {
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-transparent disabled:bg-gray-100 transition-all"
+                disabled
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-100 transition-all"
               />
             </div>
 
@@ -198,7 +262,10 @@ export default function EmployeeProfile() {
           {isEditing && (
             <div className="mt-8 flex justify-end gap-4">
               <button
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  setIsEditing(false);
+                  fetchUserProfile();
+                }}
                 className="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-all font-semibold"
               >
                 Cancel
