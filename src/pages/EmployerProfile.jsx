@@ -1,138 +1,241 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SidebarEmployer from "../Components/SidebarEmployer";
+import axios from "axios";
 
 export default function EmployerProfile() {
-  const [company, setCompany] = useState({
-    companyName: "ABC Constructions",
-    ownerName: "Ravi Kumar",
-    email: "abc.constructions@example.com",
-    phone: "+91 9876543210",
-    location: "Bangalore, Karnataka",
-    industry: "Construction",
-    employeesCount: "25",
-    about:
-      "We are a mid-scale construction firm hiring skilled workers across plumbing, carpentry & electrician roles.",
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    companyName: '',
+    companyType: '',
+    location: '',
+    gstin: '',
+    about: ''
   });
 
-  const [editing, setEditing] = useState(false);
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const user = response.data.user;
+      setFormData({
+        fullName: user.fullName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        companyName: user.companyName || '',
+        companyType: user.companyType || '',
+        location: user.location?.address || '',
+        gstin: user.gstin || '',
+        about: user.bio || ''
+      });
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      alert('Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
-    setCompany({ ...company, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const saveProfile = () => {
-    setEditing(false);
-    alert("Profile Saved ✅");
+  const handleSubmit = async () => {
+    try {
+      const updateData = {
+        fullName: formData.fullName,
+        phone: formData.phone,
+        companyName: formData.companyName,
+        companyType: formData.companyType,
+        location: { address: formData.location },
+        gstin: formData.gstin,
+        bio: formData.about
+      };
+
+      await axios.put('http://localhost:5000/api/auth/update-profile', updateData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      alert('Profile updated successfully!');
+      setIsEditing(false);
+      fetchUserProfile();
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-xl font-semibold">Loading profile...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex min-h-screen w-screen bg-[#f8f8f8]">
+    <div className="flex min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <SidebarEmployer />
 
-      <main className="flex-1 p-10 max-w-4xl">
-        <h1 className="text-3xl font-bold text-green-700 mb-6">
-          Employer Profile
-        </h1>
+      <main className="flex-1 p-10">
+        <header className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-8">
+          EMPLOYER PROFILE
+        </header>
 
-        <div className="bg-white shadow border border-green-300 rounded-xl p-8">
-          <div className="flex justify-between mb-6">
-            <h2 className="text-xl font-semibold text-green-700">
-              Company Details
-            </h2>
+        <div className="max-w-4xl bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-blue-200">
+          {/* Profile Header */}
+          <div className="flex items-center gap-6 mb-8 pb-6 border-b border-gray-200">
+            <div className="w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+              <span className="text-5xl text-white font-bold">
+                {(formData.companyName || formData.fullName).charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1">
+              <h2 className="text-3xl font-bold text-gray-800">
+                {formData.companyName || formData.fullName}
+              </h2>
+              <p className="text-gray-600">{formData.email}</p>
+              <p className="text-gray-600">{formData.phone}</p>
+            </div>
             <button
-              onClick={() => setEditing(!editing)}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg"
+              onClick={() => setIsEditing(!isEditing)}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all font-semibold shadow-lg"
             >
-              {editing ? "Cancel" : "Edit"}
+              {isEditing ? 'Cancel' : 'Edit Profile'}
             </button>
           </div>
 
-          <div className="space-y-4">
-            <Input
-              label="Company Name"
-              name="companyName"
-              value={company.companyName}
-              disabled={!editing}
-              onChange={handleChange}
-            />
-            <Input
-              label="Owner Name"
-              name="ownerName"
-              value={company.ownerName}
-              disabled={!editing}
-              onChange={handleChange}
-            />
-            <Input
-              label="Email"
-              name="email"
-              value={company.email}
-              disabled={!editing}
-              onChange={handleChange}
-            />
-            <Input
-              label="Phone Number"
-              name="phone"
-              value={company.phone}
-              disabled={!editing}
-              onChange={handleChange}
-            />
-            <Input
-              label="Location"
-              name="location"
-              value={company.location}
-              disabled={!editing}
-              onChange={handleChange}
-            />
-            <Input
-              label="Industry"
-              name="industry"
-              value={company.industry}
-              disabled={!editing}
-              onChange={handleChange}
-            />
-            <Input
-              label="No. of Employees"
-              name="employeesCount"
-              value={company.employeesCount}
-              disabled={!editing}
-              onChange={handleChange}
-            />
-
+          {/* Profile Form */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="font-semibold text-sm">About Company</label>
-              <textarea
-                name="about"
-                disabled={!editing}
-                value={company.about}
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+              <input
+                type="text"
+                name="fullName"
+                value={formData.fullName}
                 onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2 disabled:bg-gray-200"
-                rows={5}
+                disabled={!isEditing}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent disabled:bg-gray-100 transition-all"
               />
             </div>
 
-            {editing && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                disabled
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-100 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent disabled:bg-gray-100 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Company Name</label>
+              <input
+                type="text"
+                name="companyName"
+                value={formData.companyName}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent disabled:bg-gray-100 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Company Type</label>
+              <input
+                type="text"
+                name="companyType"
+                value={formData.companyType}
+                onChange={handleChange}
+                disabled={!isEditing}
+                placeholder="e.g., Construction, Real Estate"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent disabled:bg-gray-100 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent disabled:bg-gray-100 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">GSTIN (Optional)</label>
+              <input
+                type="text"
+                name="gstin"
+                value={formData.gstin}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent disabled:bg-gray-100 transition-all"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">About Company</label>
+              <textarea
+                name="about"
+                value={formData.about}
+                onChange={handleChange}
+                disabled={!isEditing}
+                rows="5"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent disabled:bg-gray-100 transition-all"
+              />
+            </div>
+          </div>
+
+          {isEditing && (
+            <div className="mt-8 flex justify-end gap-4">
               <button
-                onClick={saveProfile}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg mt-4"
+                onClick={() => {
+                  setIsEditing(false);
+                  fetchUserProfile();
+                }}
+                className="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-all font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all font-semibold shadow-lg"
               >
                 Save Changes
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </main>
-    </div>
-  );
-}
-
-function Input({ label, ...rest }) {
-  return (
-    <div>
-      <label className="font-semibold text-sm">{label}</label>
-      <input
-        {...rest}
-        className="w-full border rounded-lg px-3 py-2 disabled:bg-gray-200"
-      />
     </div>
   );
 }

@@ -23,7 +23,10 @@ const resources = {
         edit: "Edit",
         delete: "Delete",
         loading: "Loading...",
-        submit: "Submit"
+        submit: "Submit",
+        manageJobs: "Manage Jobs",
+postNewJob: "Post New Job",
+verification: "Verification"
       },
       login: {
         title: "Welcome to DailyWage",
@@ -82,7 +85,10 @@ const resources = {
         edit: "ಸಂಪಾದಿಸಿ",
         delete: "ಅಳಿಸಿ",
         loading: "ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
-        submit: "ಸಲ್ಲಿಸಿ"
+        submit: "ಸಲ್ಲಿಸಿ",
+        manageJobs: "ಕೆಲಸಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
+        postNewJob: "ಹೊಸ ಕೆಲಸವನ್ನು ಪ್ರಕಟಿಸಿ",
+  verification: "ಪರಿಶೀಲನೆ"
       },
       login: {
         title: "DailyWage ಗೆ ಸ್ವಾಗತ",

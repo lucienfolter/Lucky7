@@ -1,7 +1,16 @@
-{
-  "login": { "title": "ಡೇಲಿ-ವೇಜ್ — ಕೆಲಸವನ್ನು ತಕ್ಷಣ ಕಂಡುಹಿಡಡಿ", "subtitle": "ನಿಮ್ಮ ಗುರುತು ಪರಿಶೀಲಿಸಿ, ಕೆಲಸ ಪಡೆಯಿರಿ", "employee": "ನಾನು ಕೆಲಸಗಾರ", "employeeDesc": "ಏಕಕಾಲಿಕ ಕೆಲಸಗಳನ್ನು ಹುಡುಕಿ", "employer": "ನಾನು ನೇಮಕದಾತ", "employerDesc": "ಕೆಲಸಗಳನ್ನು ಪ್ರಕಟಿಸಿ" },
-  "nav": { "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", "profile": "ಪ್ರೊಫೈಲ್", "jobs": "ಕೆಲಸಗಳು", "messages": "ಸಂದೇಶಗಳು", "wallet": "ವಾಲೆಟ್", "settings": "ಸೆಟ್ಟಿಂಗ್ಗಳು", "postJob": "ಕೆಲಸ ಪ್ರಕಟಿಸಿ", "logout": "ಲಾಗ್ ಔಟ್" },
-  "form": { "jobTitle": "ಕೆಲಸದ ಶೀರ್ಷಿಕೆ", "category": "ವರ್ಗ", "location": "ಸ್ಥಳ", "rate": "ರೇಟು (₹/ಗಂ)", "description": "ವಿವರಣೆ", "uploadImage": "ಕೆಲಸದ ಚಿತ್ರ ಅಪ್ಲೋಡ್ ಮಾಡಿ", "post": "ಪ್ರಕಟಿಸು" },
-  "verification": { "title": "ಗುರುತು ಪರಿಶೀಲನೆ", "uploadDoc": "ಐಡಿ ದಾಖಲೆ ಅಪ್ಲೋಡ್ ಮಾಡಿ", "takeSelfie": "ಲೈವ್ ಸೆಲ್ಫಿ ತೆಗೆದುಕೊಳ್ಳಿ", "submit": "ಪರಿಶೀಲನೆಗೆ জমಾ ಮಾಡಿ" },
-  "ui": { "changeTheme": "ಡಾರ್ಕ್ ಮೋಡ್ ಸ್ಕ್ರೋಲ್" }
+ {
+  "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+  "profile": "ಪ್ರೊಫೈಲ್",
+  "jobs": "ಕೆಲಸಗಳು",
+  "messages": "ಸಂದೇಶಗಳು",
+  "wallet": "ವಾಲೆಟ್",
+  "verification": "ಪರಿಶೀಲನೆ",
+  "settings": "ಸೆಟ್ಟಿಂಗ್ಗಳು",
+  "logout": "ಲಾಗ್ ಔಟ್",
+
+  "manageJobs": "ಕೆಲಸಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
+  "postNewJob": "ಹೊಸ ಕೆಲಸವನ್ನು ಪ್ರಕಟಿಸಿ",
+
+  "employeePortal": "ನೌಕರರ ಪೋರ್ಟಲ್",
+  "employerPortal": "ಉದ್ಯೋಗದಾತರ ಪೋರ್ಟಲ್"
 }

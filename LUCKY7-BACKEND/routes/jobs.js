@@ -1,34 +1,24 @@
 const express = require("express");
 const router = express.Router();
-const Job = require("../models/Job");
+const auth = require("../middleware/auth");
+const upload = require("../middleware/upload");
+const {
+  createJob,
+  getAllJobs,
+  getEmployerJobs,
+  applyForJob,
+  updateApplicationStatus,
+  deleteJob
+} = require("../controllers/jobsController");
 
-router.post("/", async (req, res) => {
-  try {
-    const job = new Job(req.body);
-    await job.save();
-    res.status(201).json({ message: "Job created successfully", job });
-  } catch (error) {
-    res.status(500).json({ message: "Error posting job", error });
-  }
-});
+// Public routes
+router.get("/", getAllJobs);
 
-router.get("/", async (req, res) => {
-  try {
-    const jobs = await Job.find().sort({ createdAt: -1 });
-    res.json(jobs);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching jobs", error });
-  }
-});
-
-router.delete("/:id", async (req, res) => {
-  try {
-    await Job.findByIdAndDelete(req.params.id);
-    res.json({ message: "Job deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting job", error });
-  }
-});
-
+// Protected routes (require authentication)
+router.post("/", auth, upload.single("image"), createJob);
+router.get("/my-jobs", auth, getEmployerJobs);
+router.post("/:jobId/apply", auth, applyForJob);
+router.put("/:jobId/applications/:applicationId", auth, updateApplicationStatus);
+router.delete("/:id", auth, deleteJob);
 
 module.exports = router;
