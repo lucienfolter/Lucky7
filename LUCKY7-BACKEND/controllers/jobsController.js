@@ -1,6 +1,5 @@
 const path = require('path');
 const Job = require("../models/Job");
-
 exports.createJob = async (req, res) => {
   try {
     let image = {};

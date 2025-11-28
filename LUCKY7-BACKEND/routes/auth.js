@@ -3,7 +3,6 @@ const router = express.Router();
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
-
 // Register User
 router.post("/register", async (req, res) => {
   try {
@@ -28,12 +27,10 @@ router.post("/register", async (req, res) => {
       token,
       user: user.getPublicProfile(),
     });
-
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
-
 
 // Login User
 router.post("/login", async (req, res) => {
@@ -59,7 +56,6 @@ router.post("/login", async (req, res) => {
       token,
       user: user.getPublicProfile(),
     });
-
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

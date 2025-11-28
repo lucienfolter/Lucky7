@@ -237,7 +237,6 @@ export default function EmployerJobs() {
                 Post Job
               </button>
             </div>
-
           </div>
         </div>
       )}
